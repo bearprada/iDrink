@@ -1,0 +1,26 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <!-- NOTE: EditTextPreference accepts EditText attributes. -->
+    <!-- NOTE: EditTextPreference's summary should be set to its value by the activity code. -->
+    <EditTextPreference
+        android:capitalize="words"
+        android:defaultValue="70"
+        android:inputType="number"
+        android:key="normal_weight"
+        android:selectAllOnFocus="true"
+        android:title="@string/pref_normal_weight_display_name" />
+
+    <EditTextPreference
+        android:capitalize="words"
+        android:defaultValue="75"
+        android:inputType="number"
+        android:key="super_weight"
+        android:selectAllOnFocus="true"
+        android:title="@string/pref_super_weight_display_name" />
+    
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="enable_notification"
+        android:summary="@string/pref_description_notification"
+        android:title="@string/pref_title_notification_recommendations" />
+</PreferenceScreen>
