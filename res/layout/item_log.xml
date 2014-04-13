@@ -1,0 +1,33 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="80dp"
+    android:minHeight="80dp" >
+
+    <com.cengalabs.flatui.views.FlatSeekBar
+                android:id="@+id/seekbar_current_cc"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:max="250"
+                android:layout_weight="3" />
+
+    <TextView
+        android:id="@+id/textview_cc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_gravity="center"
+        android:text="50cc" />
+
+    <TextView
+        android:id="@+id/textview_timestamp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_gravity="center"
+        android:text="08:30" />
+
+</LinearLayout>
+

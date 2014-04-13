@@ -1,12 +1,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    tools:context="lab.prada.android.app.idrink.LogActivity" >
+    xmlns:tools="http://schemas.android.com/tools" >
 
     <item
-        android:id="@+id/action_chart"
+        android:id="@+id/action_bluetooth_pair"
         android:orderInCategory="100"
-        android:title="@string/action_chart"
+        android:icon="@drawable/bluetooth"
+        android:title="pair"
         app:showAsAction="always"/>
-
 </menu>

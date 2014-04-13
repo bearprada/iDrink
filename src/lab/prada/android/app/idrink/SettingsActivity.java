@@ -1,14 +1,23 @@
 package lab.prada.android.app.idrink;
 
+import lab.prada.android.app.idrink.service.BluetoothChatService;
 import android.annotation.TargetApi;
+import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.Toast;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -29,12 +38,34 @@ public class SettingsActivity extends PreferenceActivity {
      * shown on tablets.
      */
     private static final boolean ALWAYS_SIMPLE_PREFS = false;
+    private static final int REQUEST_CONNECT_DEVICE = 1;
 
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
 
         setupSimplePreferencesScreen();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.setting, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case R.id.action_bluetooth_pair:
+            // if no connection.
+            // TODO trigger device list activity
+            Intent serverIntent = new Intent(this, DeviceListActivity.class);
+            startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
+            return true;
+        default:
+            return false;
+        }
     }
 
     /**
@@ -158,5 +189,61 @@ public class SettingsActivity extends PreferenceActivity {
             // guidelines.
             bindPreferenceSummaryToValue(findPreference("notifications_new_message_ringtone"));
         }
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+        case REQUEST_CONNECT_DEVICE:
+            // When DeviceListActivity returns with a device to connect
+            if (resultCode == Activity.RESULT_OK) {
+                // Get the device MAC address
+                String address = data.getStringExtra(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+                // Attempt to connect to the device
+                if (mChatService != null) {
+                    mChatService.connect(address);
+                }
+                Toast.makeText(this, "conntect to " + address, Toast.LENGTH_LONG).show();
+            }
+            break;
+        }
+    }
+
+    private BluetoothChatService mChatService;
+    
+    private ServiceConnection mConnection = new ServiceConnection() {
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            // This is called when the connection with the service has been
+            // established, giving us the service object we can use to
+            // interact with the service.  Because we have bound to a explicit
+            // service that we know is running in our own process, we can
+            // cast its IBinder to a concrete class and directly access it.
+            mChatService = ((BluetoothChatService.LocalBinder)service).getService();
+
+//            // Tell the user about this for our demo.
+//            Toast.makeText(Binding.this, R.string.local_service_connected,
+//                    Toast.LENGTH_SHORT).show();
+        }
+
+        public void onServiceDisconnected(ComponentName className) {
+            // This is called when the connection with the service has been
+            // unexpectedly disconnected -- that is, its process crashed.
+            // Because it is running in our same process, we should never
+            // see this happen.
+            mChatService = null;
+//            Toast.makeText(Binding.this, R.string.local_service_disconnected,
+//                    Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        bindService(new Intent(this, 
+                BluetoothChatService.class), mConnection, Context.BIND_AUTO_CREATE);
+    }
+    @Override
+    public void onStop() {
+        super.onStop();
+        unbindService(mConnection);
     }
 }
