@@ -23,4 +23,12 @@
         android:key="enable_notification"
         android:summary="@string/pref_description_notification"
         android:title="@string/pref_title_notification_recommendations" />
+
+    <EditTextPreference
+        android:capitalize="words"
+        android:defaultValue="3600"
+        android:inputType="number"
+        android:key="super_duration"
+        android:selectAllOnFocus="true"
+        android:title="@string/pref_notification_duration_display_name" />
 </PreferenceScreen>

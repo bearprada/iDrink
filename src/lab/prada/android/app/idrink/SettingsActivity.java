@@ -1,20 +1,21 @@
 package lab.prada.android.app.idrink;
 
 import lab.prada.android.app.idrink.service.BluetoothChatService;
-import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
-import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -30,7 +31,7 @@ import android.widget.Toast;
  * href="http://developer.android.com/guide/topics/ui/settings.html">Settings
  * API Guide</a> for more information on developing a Settings UI.
  */
-public class SettingsActivity extends PreferenceActivity {
+public class SettingsActivity extends PreferenceActivity implements OnSharedPreferenceChangeListener {
     /**
      * Determines whether to always show the simplified settings UI, where
      * settings are presented in a single list. When false, settings are shown
@@ -39,17 +40,55 @@ public class SettingsActivity extends PreferenceActivity {
      */
     private static final boolean ALWAYS_SIMPLE_PREFS = false;
     private static final int REQUEST_CONNECT_DEVICE = 1;
+    private static final int DEFAULT_DURATION = 60 * 60; // 60 mins = 3600 secs
+
+    private BluetoothChatService mChatService;
+    private AlarmManager mAlarmService;
+    private PendingIntent mPendingIntent;
 
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-
         setupSimplePreferencesScreen();
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        getPreferenceManager().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        bindService(new Intent(this, 
+                BluetoothChatService.class), mConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        unbindService(mConnection);
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mAlarmService = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+
+        Intent intent = new Intent(this, AlarmBoardcastReceiver.class);
+        intent.setAction(AlarmBoardcastReceiver.ACTION);
+        mPendingIntent = PendingIntent.getBroadcast(this, MainActivity.AR_ALARM_TRIGGER, intent, 0);
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.setting, menu);
         return true;
     }
@@ -59,13 +98,25 @@ public class SettingsActivity extends PreferenceActivity {
         switch (item.getItemId()) {
         case R.id.action_bluetooth_pair:
             // if no connection.
-            // TODO trigger device list activity
             Intent serverIntent = new Intent(this, DeviceListActivity.class);
             startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
             return true;
         default:
             return false;
         }
+    }
+
+    void cancelAlarmTrigger() {
+        mAlarmService.cancel(mPendingIntent);
+        Toast.makeText(this, R.string.warning_alarm_stop, Toast.LENGTH_LONG).show();
+    }
+
+    void setAlarmTrigger() {
+        int duration = Integer.valueOf(getPreferenceManager().getSharedPreferences()
+                .getString("super_duration", String.valueOf(DEFAULT_DURATION)));
+        mAlarmService.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(),
+                duration, mPendingIntent);
+        Toast.makeText(this, R.string.warning_alarm_start, Toast.LENGTH_LONG).show();
     }
 
     /**
@@ -112,82 +163,12 @@ public class SettingsActivity extends PreferenceActivity {
                 || !isXLargeTablet(context);
     }
 
-    /**
-     * A preference value change listener that updates the preference's summary
-     * to reflect its new value.
-     */
-    private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
-        @Override
-        public boolean onPreferenceChange(Preference preference, Object value) {
-            String stringValue = value.toString();
-
-            // For all other preferences, set the summary to the value's
-            // simple string representation.
-            preference.setSummary(stringValue);
-            return true;
-        }
-    };
-
-    /**
-     * Binds a preference's summary to its value. More specifically, when the
-     * preference's value is changed, its summary (line of text below the
-     * preference title) is updated to reflect the value. The summary is also
-     * immediately updated upon calling this method. The exact display format is
-     * dependent on the type of preference.
-     * 
-     * @see #sBindPreferenceSummaryToValueListener
-     */
-    private static void bindPreferenceSummaryToValue(Preference preference) {
-        // Set the listener to watch for value changes.
-        preference
-                .setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
-
-        // Trigger the listener immediately with the preference's
-        // current value.
-        sBindPreferenceSummaryToValueListener.onPreferenceChange(
-                preference,
-                PreferenceManager.getDefaultSharedPreferences(
-                        preference.getContext()).getString(preference.getKey(),
-                        ""));
-    }
-
-    /**
-     * This fragment shows general preferences only. It is used when the
-     * activity is showing a two-pane settings UI.
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static class GeneralPreferenceFragment extends PreferenceFragment {
+
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.pref_general);
-
-            // Bind the summaries of EditText/List/Dialog/Ringtone preferences
-            // to their values. When their values change, their summaries are
-            // updated to reflect the new value, per the Android Design
-            // guidelines.
-            bindPreferenceSummaryToValue(findPreference("example_text"));
-            bindPreferenceSummaryToValue(findPreference("example_list"));
-        }
-    }
-
-    /**
-     * This fragment shows notification preferences only. It is used when the
-     * activity is showing a two-pane settings UI.
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public static class NotificationPreferenceFragment extends
-            PreferenceFragment {
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            addPreferencesFromResource(R.xml.pref_notification);
-
-            // Bind the summaries of EditText/List/Dialog/Ringtone preferences
-            // to their values. When their values change, their summaries are
-            // updated to reflect the new value, per the Android Design
-            // guidelines.
-            bindPreferenceSummaryToValue(findPreference("notifications_new_message_ringtone"));
         }
     }
 
@@ -208,8 +189,6 @@ public class SettingsActivity extends PreferenceActivity {
         }
     }
 
-    private BluetoothChatService mChatService;
-    
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder service) {
             // This is called when the connection with the service has been
@@ -220,8 +199,8 @@ public class SettingsActivity extends PreferenceActivity {
             mChatService = ((BluetoothChatService.LocalBinder)service).getService();
 
 //            // Tell the user about this for our demo.
-//            Toast.makeText(Binding.this, R.string.local_service_connected,
-//                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(SettingsActivity.this, R.string.local_service_connected,
+                    Toast.LENGTH_SHORT).show();
         }
 
         public void onServiceDisconnected(ComponentName className) {
@@ -230,20 +209,27 @@ public class SettingsActivity extends PreferenceActivity {
             // Because it is running in our same process, we should never
             // see this happen.
             mChatService = null;
-//            Toast.makeText(Binding.this, R.string.local_service_disconnected,
-//                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(SettingsActivity.this, R.string.local_service_disconnected,
+                    Toast.LENGTH_SHORT).show();
         }
     };
 
     @Override
-    public void onStart() {
-        super.onStart();
-        bindService(new Intent(this, 
-                BluetoothChatService.class), mConnection, Context.BIND_AUTO_CREATE);
-    }
-    @Override
-    public void onStop() {
-        super.onStop();
-        unbindService(mConnection);
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (key.equals("enable_notification")) {
+            if (sharedPreferences.getBoolean("enable_notification", false)) {
+                this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        setAlarmTrigger();
+                    }
+                });
+            } else {
+                cancelAlarmTrigger();
+            }
+        } else if (key.equals("super_duration")) {
+            cancelAlarmTrigger();
+            setAlarmTrigger();
+        }
     }
 }

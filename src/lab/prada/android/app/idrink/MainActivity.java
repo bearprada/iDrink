@@ -4,8 +4,11 @@ import java.util.Calendar;
 
 import lab.prada.android.app.idrink.LogProvider.LogDbHelper;
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.database.ContentObserver;
 import android.database.Cursor;
@@ -27,7 +30,10 @@ import com.androidquery.AQuery;
 
 public class MainActivity extends ActionBarActivity {
 
-    private static final int AR_SETTING = 0;
+    static final String ACT_ALARM_NOTIFICATION = "lab.prada.alarm.NOTIFY";
+
+    private static final int AR_SETTING             = 1;
+    public static final int AR_ALARM_TRIGGER        = 2;
 
     // Message types sent from the BluetoothChatService Handler
     public static final int MESSAGE_STATE_CHANGE = 1;
@@ -45,6 +51,10 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        if (ACT_ALARM_NOTIFICATION.equals(getIntent().getAction())) {
+            // TODO remove notification from manager
+        }
+
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.container, new PlaceholderFragment()).commit();
@@ -53,7 +63,6 @@ public class MainActivity extends ActionBarActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;

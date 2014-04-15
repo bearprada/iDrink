@@ -121,13 +121,13 @@ public class LogActivity extends ActionBarActivity {
 
         @Override
         public void onRefreshStarted(View view) {
-            mHandler.postDelayed(new Runnable() {
+            mHandler.post(new Runnable() {
                 @Override
                 public void run() {
                     updateData();
                     mPullToRefreshLayout.setRefreshComplete();
                 }
-            }, 1000);
+            });
         }
     }
 

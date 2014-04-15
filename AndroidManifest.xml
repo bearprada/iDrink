@@ -6,10 +6,12 @@
 
     <uses-sdk
         android:minSdkVersion="8"
-        android:targetSdkVersion="19" />
+        android:targetSdkVersion="18" />
 
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:allowBackup="true"
@@ -39,5 +41,11 @@
             android:name="lab.prada.android.app.idrink.LogProvider"
             android:authorities="lab.prada.android.app.idrink"
             android:syncable="true" />
+        <receiver
+            android:name=".AlarmBoardcastReceiver" >
+            <intent-filter> 
+                <action android:name="com.manish.alarm.ACTION" />
+            </intent-filter> 
+        </receiver>
     </application>
 </manifest>
