@@ -7,7 +7,7 @@
     <string name="action_bluetooth_pair">Pair</string>
     <string name="title_activity_log">LogActivity</string>
 
-    <!--  DeviceListActivity -->
+    <!-- DeviceListActivity -->
     <string name="scanning">scanning for devices...</string>
     <string name="select_device">select a device to connect</string>
     <string name="none_paired">No devices have been paired</string>
@@ -15,12 +15,12 @@
     <string name="title_paired_devices">Paired Devices</string>
     <string name="title_other_devices">Other Available Devices</string>
     <string name="button_scan">Scan for devices</string>
-
     <string name="local_service_connected">"連線完成"</string>
     <string name="local_service_disconnected">"移除連線"</string>
-
     <string name="warning_alarm_start">"啟用推播鬧鐘"</string>
     <string name="warning_alarm_stop">"停用推播鬧鐘"</string>
-
     <string name="notification_title">"提醒您水量攝取不足"</string>
+    <string name="title_activity_chart">ChartActivity</string>
+    <string name="hello_world">Hello world!</string>
+
 </resources>

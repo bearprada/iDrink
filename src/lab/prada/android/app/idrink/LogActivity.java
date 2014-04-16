@@ -11,6 +11,7 @@ import uk.co.senab.actionbarpulltorefresh.library.listeners.OnRefreshListener;
 import uk.co.senab.actionbarpulltorefresh.library.viewdelegates.AbsListViewDelegate;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.os.Bundle;
@@ -55,7 +56,8 @@ public class LogActivity extends ActionBarActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.action_chart) {
-            // TODO go to chart view
+            Intent intent = new Intent(this, ChartActivity.class);
+            startActivity(intent);
             return true;
         }
         return super.onOptionsItemSelected(item);
