@@ -1,0 +1,22 @@
+apply plugin: 'android-library'
+
+android {
+    compileSdkVersion 18
+    buildToolsVersion "19.0.0"
+
+    defaultConfig {
+        minSdkVersion 8
+    }
+
+    buildTypes {
+        release {
+            runProguard false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+}
+
+dependencies {
+    compile project(':actionbar_pulltorefresh')
+    compile 'com.android.support:appcompat-v7:+'
+}
