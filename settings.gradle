@@ -1,5 +1,2 @@
 include ':flatUI'
-include ':smooth_progressbar'
-include ':actionbar_pulltorefresh'
-include ':actionbarcompat'
 include ':iDrink'

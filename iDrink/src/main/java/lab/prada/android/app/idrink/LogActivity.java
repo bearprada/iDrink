@@ -4,11 +4,12 @@ import java.util.Calendar;
 import java.util.Date;
 
 import lab.prada.android.app.idrink.LogProvider.LogDbHelper;
+import uk.co.senab.actionbarpulltorefresh.extras.actionbarcompat.PullToRefreshLayout;
 import uk.co.senab.actionbarpulltorefresh.library.ActionBarPullToRefresh;
 import uk.co.senab.actionbarpulltorefresh.library.Options;
-import uk.co.senab.actionbarpulltorefresh.library.PullToRefreshLayout;
 import uk.co.senab.actionbarpulltorefresh.library.listeners.OnRefreshListener;
 import uk.co.senab.actionbarpulltorefresh.library.viewdelegates.AbsListViewDelegate;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
