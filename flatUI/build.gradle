@@ -8,6 +8,9 @@ android {
         minSdkVersion -1
     }
 
+    lintOptions {
+          abortOnError false
+    }
     buildTypes {
         release {
             runProguard false
