@@ -3,6 +3,8 @@ package lab.prada.android.app.idrink;
 import java.util.Calendar;
 
 import lab.prada.android.app.idrink.LogProvider.LogDbHelper;
+
+import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -12,6 +14,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
+import android.os.Build;
 
 public class AlarmBoardcastReceiver extends BroadcastReceiver {
     private static final int NOTIFICATION_ID = 0;
@@ -26,6 +29,7 @@ public class AlarmBoardcastReceiver extends BroadcastReceiver {
         }
     }
 
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     private void sendNotification(Context ctx, int currentCc, int targetCc) {
         Notification.Builder builder = new Notification.Builder(ctx);
         Intent intent = new Intent(ctx, MainActivity.class);
