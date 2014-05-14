@@ -4,11 +4,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 import lab.prada.android.app.idrink.LogProvider.LogDbHelper;
-import uk.co.senab.actionbarpulltorefresh.library.ActionBarPullToRefresh;
-import uk.co.senab.actionbarpulltorefresh.library.Options;
-import uk.co.senab.actionbarpulltorefresh.library.PullToRefreshLayout;
-import uk.co.senab.actionbarpulltorefresh.library.listeners.OnRefreshListener;
-import uk.co.senab.actionbarpulltorefresh.library.viewdelegates.AbsListViewDelegate;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -17,6 +13,7 @@ import android.database.DatabaseUtils;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -66,11 +63,11 @@ public class LogActivity extends ActionBarActivity {
     /**
      * A placeholder fragment containing a simple view.
      */
-    public static class PlaceholderFragment extends Fragment implements OnRefreshListener {
+    public static class PlaceholderFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
 
         private ListView mListView;
         private LogAdapter mAdapter;
-        private PullToRefreshLayout mPullToRefreshLayout;
+        private SwipeRefreshLayout mPullToRefreshLayout;
         private Handler mHandler;
 
         public PlaceholderFragment() {
@@ -86,15 +83,9 @@ public class LogActivity extends ActionBarActivity {
             mListView.setAdapter(mAdapter);
             updateData();
 
-            mPullToRefreshLayout = (PullToRefreshLayout) rootView.findViewById(R.id.ptr_layout);
-            ActionBarPullToRefresh.from(getActivity())
-                .options(Options.create()
-                        .scrollDistance(.5f)
-                        .build())
-                .theseChildrenArePullable(R.id.list_view)
-                .useViewDelegate(GridView.class, new AbsListViewDelegate())
-                .listener(this)
-                .setup(mPullToRefreshLayout);
+            mPullToRefreshLayout = (SwipeRefreshLayout) rootView.findViewById(R.id.ptr_layout);
+            mPullToRefreshLayout.setOnRefreshListener(this);
+
             mHandler = new Handler();
             return rootView;
         }
@@ -122,12 +113,12 @@ public class LogActivity extends ActionBarActivity {
         }
 
         @Override
-        public void onRefreshStarted(View view) {
+        public void onRefresh() {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
                     updateData();
-                    mPullToRefreshLayout.setRefreshComplete();
+                    mPullToRefreshLayout.setRefreshing(false);
                 }
             });
         }

@@ -4,6 +4,9 @@ import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.GraphViewSeries;
 import com.jjoe64.graphview.LineGraphView;
 
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
@@ -12,6 +15,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+
+import java.util.Calendar;
+import java.util.Vector;
 
 public class ChartActivity extends ActionBarActivity {
 
@@ -28,7 +34,6 @@ public class ChartActivity extends ActionBarActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.chart, menu);
         return true;
@@ -61,15 +66,35 @@ public class ChartActivity extends ActionBarActivity {
 //                    container, false);
             // TODO insert the real data
             LineGraphView lineGraphView = new LineGraphView(getActivity(), "test");
-            GraphViewSeries exampleSeries = new GraphViewSeries(new GraphView.GraphViewData[] {
-                    new GraphView.GraphViewData(1, 2.0d)
-                    , new GraphView.GraphViewData(2, 1.5d)
-                    , new GraphView.GraphViewData(3, 2.5d)
-                    , new GraphView.GraphViewData(4, 1.0d)
-                });
-            lineGraphView.addSeries(exampleSeries);
+
+            lineGraphView.addSeries(getDataSeries());
             return lineGraphView;
         }
+
+        private GraphViewSeries getDataSeries() {
+            Calendar queryTime = Calendar.getInstance();
+            queryTime.set(Calendar.HOUR, 0); //setting time to 0, as its set to current time by default.
+            queryTime.set(Calendar.MINUTE, 0);
+            long t1 = queryTime.getTimeInMillis();
+
+            queryTime.set(Calendar.DATE, queryTime.get(Calendar.DATE) + 1);
+            long t2 = queryTime.getTimeInMillis();
+
+            Cursor c = getActivity().getContentResolver().query(LogProvider.URI,
+                    null, LogProvider.LogDbHelper.TIMESTAMP + ">?" + " and " + LogProvider.LogDbHelper.TIMESTAMP + "<?",
+                    new String[]{String.valueOf(t1), String.valueOf(t2)}, null);
+
+            Vector<GraphView.GraphViewData> data = new Vector<GraphView.GraphViewData>(c.getCount());
+            for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
+                ContentValues values = new ContentValues();
+                DatabaseUtils.cursorRowToContentValues(c, values);
+                long x = values.getAsLong(LogProvider.LogDbHelper.TIMESTAMP);
+                int y = values.getAsInteger(LogProvider.LogDbHelper.WATER_CC);
+                data.add(new GraphView.GraphViewData(x, y));
+            }
+            return new GraphViewSeries(data.toArray(new GraphView.GraphViewData[] {}));
+        }
+
     }
 
 }
