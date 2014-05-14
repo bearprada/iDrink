@@ -9,8 +9,9 @@ import android.util.AttributeSet;
 import android.widget.EditText;
 
 import com.cengalabs.flatui.FlatUI;
-import com.cengalabs.flatui.R;
 import com.cengalabs.flatui.constants.Colors;
+
+import lab.prada.android.app.idrink.R;
 
 /**
  * Created with IntelliJ IDEA.

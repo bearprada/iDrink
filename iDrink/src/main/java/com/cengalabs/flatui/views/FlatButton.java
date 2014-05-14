@@ -10,9 +10,11 @@ import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.graphics.drawable.shapes.RoundRectShape;
 import android.util.AttributeSet;
+
+
 import com.cengalabs.flatui.FlatUI;
-import com.cengalabs.flatui.R;
 import com.cengalabs.flatui.constants.Colors;
+import lab.prada.android.app.idrink.R;
 
 /**
  * Created with IntelliJ IDEA.

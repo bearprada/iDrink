@@ -4,12 +4,18 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.graphics.drawable.*;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.InsetDrawable;
+import android.graphics.drawable.LayerDrawable;
+import android.graphics.drawable.PaintDrawable;
+import android.graphics.drawable.StateListDrawable;
 import android.util.AttributeSet;
 import android.widget.CheckBox;
+
 import com.cengalabs.flatui.FlatUI;
-import com.cengalabs.flatui.R;
 import com.cengalabs.flatui.constants.Colors;
+import lab.prada.android.app.idrink.R;
 
 /**
  * Created with IntelliJ IDEA.

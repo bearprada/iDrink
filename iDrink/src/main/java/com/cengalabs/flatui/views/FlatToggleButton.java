@@ -13,8 +13,9 @@ import android.util.AttributeSet;
 import android.view.ViewGroup;
 import android.widget.ToggleButton;
 
+import lab.prada.android.app.idrink.R;
+
 import com.cengalabs.flatui.FlatUI;
-import com.cengalabs.flatui.R;
 import com.cengalabs.flatui.constants.Colors;
 
 /**

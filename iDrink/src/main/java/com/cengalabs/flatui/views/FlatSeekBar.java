@@ -8,6 +8,7 @@ import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.PaintDrawable;
 import android.util.AttributeSet;
 import android.view.Gravity;
+
 import com.cengalabs.flatui.FlatUI;
 import com.cengalabs.flatui.constants.Colors;
 
@@ -46,12 +47,12 @@ public class FlatSeekBar extends android.widget.SeekBar implements Colors {
     private void init(AttributeSet attrs, boolean applyAttributeTheme) {
 
         if (attrs != null) {
-            TypedArray a = getContext().obtainStyledAttributes(attrs, com.cengalabs.flatui.R.styleable.CengaLabs);
+            TypedArray a = getContext().obtainStyledAttributes(attrs, lab.prada.android.app.idrink.R.styleable.CengaLabs);
 
-            theme = a.getInt(com.cengalabs.flatui.R.styleable.CengaLabs_theme, FlatUI.DEFAULT_THEME);
+            theme = a.getInt(lab.prada.android.app.idrink.R.styleable.CengaLabs_theme, FlatUI.DEFAULT_THEME);
             color = FlatUI.getColor(theme);
 
-            size = a.getDimensionPixelSize(com.cengalabs.flatui.R.styleable.CengaLabs_size, size);
+            size = a.getDimensionPixelSize(lab.prada.android.app.idrink.R.styleable.CengaLabs_size, size);
 
             a.recycle();
         } else if (color == null) {

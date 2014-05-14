@@ -1,12 +1,14 @@
 package com.cengalabs.flatui;
 
+import android.annotation.TargetApi;
 import android.app.ActionBar;
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.PaintDrawable;
+import android.os.Build;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 
 import com.cengalabs.flatui.constants.Colors;
@@ -120,7 +122,8 @@ public class FlatUI implements Colors {
      * @param dark boolean for choosing dark colors or primary colors
      * @param titleEnabled used for hiding/showing action bar title after changing drawable
      */
-    public static void setActionBarTheme(Activity activity, int theme, boolean dark, boolean titleEnabled) {
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public static void setActionBarTheme(FragmentActivity activity, int theme, boolean dark, boolean titleEnabled) {
 
         Drawable drawable = getActionBarDrawable(theme, dark);
 

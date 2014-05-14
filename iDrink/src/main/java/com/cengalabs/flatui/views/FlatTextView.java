@@ -5,8 +5,10 @@ import android.content.res.TypedArray;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.util.AttributeSet;
+
+import lab.prada.android.app.idrink.R;
+
 import com.cengalabs.flatui.FlatUI;
-import com.cengalabs.flatui.R;
 import com.cengalabs.flatui.constants.Colors;
 
 /**
