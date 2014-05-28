@@ -412,8 +412,11 @@ public class BluetoothChatService extends Service {
                     // Read from the InputStream
                     bytes = mmInStream.read(buffer);
 
+                    byte[] copiedBytes = new byte[bytes];
                     // Send the obtained bytes to the UI Activity
-                    mHandler.obtainMessage(MainActivity.MESSAGE_READ, bytes, -1, buffer)
+                    // reference : http://stackoverflow.com/questions/12239692/android-inputstream-dropping-first-two-bytes-modified-bluetoothchat/12264498#12264498
+                    System.arraycopy(buffer, 0, copiedBytes, 0, bytes);
+                    mHandler.obtainMessage(MainActivity.MESSAGE_READ, bytes, -1, copiedBytes)
                             .sendToTarget();
                     int cc = Integer.valueOf(new String(buffer, 0, bytes));
                     ContentValues values = new ContentValues();

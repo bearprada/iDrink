@@ -4,11 +4,8 @@ import java.util.Calendar;
 
 import lab.prada.android.app.idrink.LogProvider.LogDbHelper;
 import android.app.Activity;
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.Intent;
 import android.database.ContentObserver;
 import android.database.Cursor;
@@ -16,6 +13,7 @@ import android.database.DatabaseUtils;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
 import android.view.LayoutInflater;
@@ -86,6 +84,7 @@ public class MainActivity extends ActionBarActivity {
      * A placeholder fragment containing a simple view.
      */
     public static class PlaceholderFragment extends Fragment implements OnClickListener {
+        protected static final int REFRESH_VIEW = 0;
         private Handler mHandler;
         private AQuery aq;
         private ContentResolver mContentResolver;
@@ -123,11 +122,21 @@ public class MainActivity extends ActionBarActivity {
             aq.find(R.id.seekbar_current_cc_daily).enabled(false);
             refreshView();
 
-            mHandler = new Handler();
+            mHandler = new Handler() {
+                @Override
+                public void handleMessage(Message message) {
+                    switch (message.what) {
+                    case REFRESH_VIEW:
+                        refreshView();
+                        break;
+                    }
+                }
+            };
+
             mContentObserver = new ContentObserver(mHandler) {
                 @Override
                 public void onChange(boolean selfChange, Uri uri) {
-                    refreshView();
+                    mHandler.sendEmptyMessage(REFRESH_VIEW);
                 }
             };
             return rootView;
