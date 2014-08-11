@@ -45,7 +45,7 @@ public class LogProvider extends ContentProvider {
         LogDbHelper helper = new LogDbHelper(getContext());
         SQLiteDatabase db = helper.getReadableDatabase();
         return db.query(LogDbHelper.DB_TABLE_NAME, projection, selection,
-                selectionArgs, null, null, DEFAULT_SORT_ORDER);
+                selectionArgs, null, null, sortOrder == null ? DEFAULT_SORT_ORDER : sortOrder);
     }
 
     @Override

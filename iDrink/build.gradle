@@ -21,5 +21,5 @@ dependencies {
     compile 'com.android.support:support-v4:+'
     compile 'com.android.support:appcompat-v7:+'
     compile 'com.googlecode.android-query:android-query:0.25.9'
-    compile files('libs/graphview-3.1.jar')
+    compile files('libs/GraphView-3.1.2.jar')
 }
