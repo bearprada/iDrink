@@ -16,8 +16,10 @@
 
 package lab.prada.android.app.idrink.service;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.UUID;
 
@@ -378,52 +380,44 @@ public class BluetoothChatService extends Service {
      */
     private class ConnectedThread extends Thread {
         private final BluetoothSocket mmSocket;
-        private final InputStream mmInStream;
-        private final OutputStream mmOutStream;
+        private InputStream mmInStream = null;
+        private OutputStream mmOutStream = null;
         private final ContentResolver mmResovler;
 
         public ConnectedThread(BluetoothSocket socket, ContentResolver resolver) {
             Log.d(TAG, "create ConnectedThread");
             mmSocket = socket;
             mmResovler = resolver;
-            InputStream tmpIn = null;
-            OutputStream tmpOut = null;
 
             // Get the BluetoothSocket input and output streams
             try {
-                tmpIn = socket.getInputStream();
-                tmpOut = socket.getOutputStream();
+                mmInStream = socket.getInputStream();
+                mmOutStream = socket.getOutputStream();
             } catch (IOException e) {
                 Log.e(TAG, "temp sockets not created", e);
             }
-
-            mmInStream = tmpIn;
-            mmOutStream = tmpOut;
         }
 
         public void run() {
             Log.i(TAG, "BEGIN mConnectedThread");
-            byte[] buffer = new byte[1024];
-            int bytes;
-
+            BufferedReader reader = new BufferedReader(new InputStreamReader(mmInStream));
             // Keep listening to the InputStream while connected
             while (true) {
                 try {
-                    // Read from the InputStream
-                    bytes = mmInStream.read(buffer);
-
-                    byte[] copiedBytes = new byte[bytes];
-                    // Send the obtained bytes to the UI Activity
-                    // reference : http://stackoverflow.com/questions/12239692/android-inputstream-dropping-first-two-bytes-modified-bluetoothchat/12264498#12264498
-                    System.arraycopy(buffer, 0, copiedBytes, 0, bytes);
-                    mHandler.obtainMessage(MainActivity.MESSAGE_READ, bytes, -1, copiedBytes)
-                            .sendToTarget();
-                    int cc = Integer.valueOf(new String(buffer, 0, bytes));
-                    ContentValues values = new ContentValues();
-                    values.put(LogDbHelper.WATER_CC, cc);
-                    values.put(LogDbHelper.TIMESTAMP, System.currentTimeMillis());
-                    Uri result = mmResovler.insert(LogProvider.URI, values);
-                    android.util.Log.w("PC", "insert result " + result.toString());
+                    String data = reader.readLine();
+                    android.util.Log.w("PC", "data : " + data);
+                    if (data != null) {
+                        try {
+                            int cc = Integer.valueOf(data);
+                            ContentValues values = new ContentValues();
+                            values.put(LogDbHelper.WATER_CC, cc);
+                            values.put(LogDbHelper.TIMESTAMP, System.currentTimeMillis());
+                            Uri result = mmResovler.insert(LogProvider.URI, values);
+                            android.util.Log.w("PC", "insert cc : " + cc + "\trecord : " + result.toString());
+                        } catch (NumberFormatException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 } catch (IOException e) {
                     Log.e(TAG, "disconnected", e);
                     connectionLost();
