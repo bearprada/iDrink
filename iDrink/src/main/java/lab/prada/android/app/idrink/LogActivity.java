@@ -5,9 +5,11 @@ import java.util.Date;
 
 import lab.prada.android.app.idrink.LogProvider.LogDbHelper;
 
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.os.Bundle;
@@ -69,6 +71,8 @@ public class LogActivity extends ActionBarActivity {
         private LogAdapter mAdapter;
         private SwipeRefreshLayout mPullToRefreshLayout;
         private Handler mHandler;
+        private ContentResolver mContentResolver;
+        private ContentObserver mContentObserver;
 
         public PlaceholderFragment() {
         }
@@ -87,7 +91,28 @@ public class LogActivity extends ActionBarActivity {
             mPullToRefreshLayout.setOnRefreshListener(this);
 
             mHandler = new Handler();
+            mContentResolver = getActivity().getContentResolver();
+            mContentObserver = new ContentObserver(mHandler) {
+                @Override
+                public void onChange(boolean selfChange) {
+                    if (selfChange) {
+                        mAdapter.notifyDataSetChanged();
+                    }
+                }
+            };
             return rootView;
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            mContentResolver.registerContentObserver(LogProvider.URI, true, mContentObserver);
+        }
+
+        @Override
+        public void onPause() {
+            super.onPause();
+            mContentResolver.unregisterContentObserver(mContentObserver);
         }
 
         private void updateData() {
