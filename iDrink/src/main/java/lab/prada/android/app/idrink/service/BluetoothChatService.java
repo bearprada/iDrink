@@ -16,16 +16,6 @@
 
 package lab.prada.android.app.idrink.service;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.util.UUID;
-
-import lab.prada.android.app.idrink.LogProvider;
-import lab.prada.android.app.idrink.LogProvider.LogDbHelper;
-import lab.prada.android.app.idrink.MainActivity;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -41,6 +31,18 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.util.Log;
+
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StreamTokenizer;
+import java.util.UUID;
+
+import lab.prada.android.app.idrink.LogProvider;
+import lab.prada.android.app.idrink.LogProvider.LogDbHelper;
+import lab.prada.android.app.idrink.MainActivity;
 
 /**
  * This class does all the work for setting up and managing Bluetooth
@@ -188,23 +190,6 @@ public class BluetoothChatService extends Service {
         if (mConnectedThread != null) {mConnectedThread.cancel(); mConnectedThread = null;}
         if (mAcceptThread != null) {mAcceptThread.cancel(); mAcceptThread = null;}
         setState(STATE_NONE);
-    }
-
-    /**
-     * Write to the ConnectedThread in an unsynchronized manner
-     * @param out The bytes to write
-     * @see ConnectedThread#write(byte[])
-     */
-    public void write(byte[] out) {
-        // Create temporary object
-        ConnectedThread r;
-        // Synchronize a copy of the ConnectedThread
-        synchronized (this) {
-            if (mState != STATE_CONNECTED) return;
-            r = mConnectedThread;
-        }
-        // Perform the write unsynchronized
-        r.write(out);
     }
 
     /**
@@ -381,7 +366,6 @@ public class BluetoothChatService extends Service {
     private class ConnectedThread extends Thread {
         private final BluetoothSocket mmSocket;
         private InputStream mmInStream = null;
-        private OutputStream mmOutStream = null;
         private final ContentResolver mmResovler;
 
         public ConnectedThread(BluetoothSocket socket, ContentResolver resolver) {
@@ -392,7 +376,6 @@ public class BluetoothChatService extends Service {
             // Get the BluetoothSocket input and output streams
             try {
                 mmInStream = socket.getInputStream();
-                mmOutStream = socket.getOutputStream();
             } catch (IOException e) {
                 Log.e(TAG, "temp sockets not created", e);
             }
@@ -401,46 +384,22 @@ public class BluetoothChatService extends Service {
         public void run() {
             Log.i(TAG, "BEGIN mConnectedThread");
             BufferedReader reader = new BufferedReader(new InputStreamReader(mmInStream));
-            // Keep listening to the InputStream while connected
-            while (true) {
-                try {
-                    String data = reader.readLine();
-                    android.util.Log.w("PC", "data : " + data);
-                    if (data != null) {
-                        try {
-                            int cc = Integer.valueOf(data);
-                            ContentValues values = new ContentValues();
-                            values.put(LogDbHelper.WATER_CC, cc);
-                            values.put(LogDbHelper.TIMESTAMP, System.currentTimeMillis());
-                            Uri result = mmResovler.insert(LogProvider.URI, values);
-                            android.util.Log.w("PC", "insert cc : " + cc + "\trecord : " + result.toString());
-                        } catch (NumberFormatException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                } catch (IOException e) {
-                    Log.e(TAG, "disconnected", e);
-                    connectionLost();
-                    break;
-                } catch (NumberFormatException e) {
-                    Log.e(TAG, "the wrong format", e);
-                }
-            }
-        }
-
-        /**
-         * Write to the connected OutStream.
-         * @param buffer  The bytes to write
-         */
-        public void write(byte[] buffer) {
+            StreamTokenizer tokenizer = new StreamTokenizer(reader);
             try {
-                mmOutStream.write(buffer);
-
-                // Share the sent message back to the UI Activity
-                mHandler.obtainMessage(MainActivity.MESSAGE_WRITE, -1, -1, buffer)
-                        .sendToTarget();
+                while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
+                    if (tokenizer.ttype == StreamTokenizer.TT_NUMBER) {
+                        double cc = tokenizer.nval;
+                        Log.w("PC", "cc : " + cc);
+                        ContentValues values = new ContentValues();
+                        values.put(LogDbHelper.WATER_CC, cc);
+                        values.put(LogDbHelper.TIMESTAMP, System.currentTimeMillis());
+                        Uri result = mmResovler.insert(LogProvider.URI, values);
+                        Log.w("PC", "insert cc : " + cc + "\trecord : " + result.toString());
+                    }
+                }
             } catch (IOException e) {
-                Log.e(TAG, "Exception during write", e);
+                Log.e(TAG, "disconnected", e);
+                connectionLost();
             }
         }
 
