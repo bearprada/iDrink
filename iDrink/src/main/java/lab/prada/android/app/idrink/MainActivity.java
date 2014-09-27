@@ -186,7 +186,12 @@ public class MainActivity extends ActionBarActivity {
                 for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
                     ContentValues values = new ContentValues();
                     DatabaseUtils.cursorRowToContentValues(c, values);
-                    total += values.getAsInteger(LogDbHelper.WATER_CC);
+                    if (values.containsKey(LogDbHelper.WATER_CC)) {
+                        Integer cc = values.getAsInteger(LogDbHelper.WATER_CC);
+                        if (cc != null) {
+                            total += values.getAsInteger(LogDbHelper.WATER_CC);
+                        }
+                    }
                 }
             } finally {
                 c.close();
