@@ -11,7 +11,7 @@ import android.net.Uri;
 public class LogProvider extends ContentProvider {
 
     private static final String AUTHORITY = "lab.prada.android.app.idrink";
-    public static final Uri URI = Uri.parse("content://" + AUTHORITY + "/" + LogDbHelper.DB_TABLE_NAME);
+    public static final Uri URI = Uri.parse("content://" + AUTHORITY);
     public static final String DEFAULT_SORT_ORDER = "timestamp DESC";
 
     @Override
@@ -29,9 +29,8 @@ public class LogProvider extends ContentProvider {
         LogDbHelper helper = new LogDbHelper(getContext());
         SQLiteDatabase db = helper.getWritableDatabase();
         long id = db.insert(LogDbHelper.DB_TABLE_NAME, null, values);
-        Uri result = Uri.parse("content://" + AUTHORITY + "/" + LogDbHelper.DB_TABLE_NAME + "/" + id);
         getContext().getContentResolver().notifyChange(URI, null);
-        return result;
+        return Uri.parse("content://" + AUTHORITY + "/" + LogDbHelper.DB_TABLE_NAME + "/" + id);
     }
 
     @Override
