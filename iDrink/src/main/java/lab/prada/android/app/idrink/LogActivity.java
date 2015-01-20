@@ -1,32 +1,27 @@
 package lab.prada.android.app.idrink;
 
-import java.util.Calendar;
-import java.util.Date;
-
-import lab.prada.android.app.idrink.LogProvider.LogDbHelper;
-
-import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.ContentObserver;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
-import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v4.widget.CursorAdapter;
 import android.support.v7.app.ActionBarActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.GridView;
 import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
+import java.util.Calendar;
+import java.util.Date;
+
+import lab.prada.android.app.idrink.LogProvider.LogDbHelper;
 
 public class LogActivity extends ActionBarActivity {
 
@@ -65,13 +60,10 @@ public class LogActivity extends ActionBarActivity {
     /**
      * A placeholder fragment containing a simple view.
      */
-    public static class PlaceholderFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
+    public static class PlaceholderFragment extends Fragment {
 
         private ListView mListView;
         private LogAdapter mAdapter;
-        private SwipeRefreshLayout mPullToRefreshLayout;
-        private Handler mHandler;
-        private ContentResolver mContentResolver;
         private ContentObserver mContentObserver;
 
         public PlaceholderFragment() {
@@ -82,116 +74,71 @@ public class LogActivity extends ActionBarActivity {
                 Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_log, container,
                     false);
-            mAdapter = new LogAdapter(getActivity());
-            mListView = (ListView) rootView.findViewById(R.id.list_view);
-            mListView.setAdapter(mAdapter);
-            updateData();
-
-            mPullToRefreshLayout = (SwipeRefreshLayout) rootView.findViewById(R.id.ptr_layout);
-            mPullToRefreshLayout.setOnRefreshListener(this);
-
-            mHandler = new Handler();
-            mContentResolver = getActivity().getContentResolver();
-            mContentObserver = new ContentObserver(mHandler) {
+            mAdapter = new LogAdapter(getActivity(), getQuery());
+            mContentObserver = new ContentObserver(new Handler()) {
                 @Override
                 public void onChange(boolean selfChange) {
-                    if (selfChange) {
-                        mAdapter.notifyDataSetChanged();
-                    }
+                    mAdapter.changeCursor(getQuery()); // we reset cursor here
                 }
             };
+            mListView = (ListView) rootView.findViewById(R.id.list_view);
+            mListView.setAdapter(mAdapter);
             return rootView;
         }
 
         @Override
         public void onResume() {
             super.onResume();
-            mContentResolver.registerContentObserver(LogProvider.URI, true, mContentObserver);
+            getActivity().getContentResolver().registerContentObserver(LogProvider.URI, true, mContentObserver);
         }
 
         @Override
         public void onPause() {
             super.onPause();
-            mContentResolver.unregisterContentObserver(mContentObserver);
+            getActivity().getContentResolver().unregisterContentObserver(mContentObserver);
         }
 
-        private void updateData() {
-            mAdapter.clear();
-
+        private Cursor getQuery() {
             Calendar queryTime = Calendar.getInstance();
-            queryTime.set(Calendar.HOUR, 0); //setting time to 0, as its set to current time by default. 
+            queryTime.set(Calendar.HOUR, 0); //setting time to 0, as its set to current time by default.
             queryTime.set(Calendar.MINUTE, 0);
             long t1 = queryTime.getTimeInMillis();
-
             queryTime.set(Calendar.DATE, queryTime.get(Calendar.DATE) + 1);
             long t2 = queryTime.getTimeInMillis();
 
-            Cursor c = getActivity().getContentResolver().query(LogProvider.URI,
-                    null, LogDbHelper.TIMESTAMP + ">?" + " and " + LogDbHelper.TIMESTAMP + "<?", 
-                    new String[]{String.valueOf(t1), String.valueOf(t2)}, null);
-            for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
-                ContentValues values = new ContentValues();
-                DatabaseUtils.cursorRowToContentValues(c, values);
-                mAdapter.add(new LogData(values));
-            }
-            mAdapter.notifyDataSetChanged();
-        }
-
-        @Override
-        public void onRefresh() {
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    updateData();
-                    mPullToRefreshLayout.setRefreshing(false);
-                }
-            });
+            return getActivity().getContentResolver().query(
+                    LogProvider.URI,
+                    null, LogDbHelper.TIMESTAMP + ">? and " + LogDbHelper.TIMESTAMP + "<?",
+                    new String[] { String.valueOf(t1), String.valueOf(t2) },
+                    null);
         }
     }
 
-    public static class LogAdapter extends ArrayAdapter<LogData> {
+    public static class LogAdapter extends CursorAdapter {
 
-        private final LayoutInflater mInFlator;
-
-        public LogAdapter(Context context) {
-            super(context, -1);
-            mInFlator = LayoutInflater.from(context);
+        public LogAdapter(Context context, Cursor cursor) {
+            super(context, cursor);
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            View view;
-            if (convertView != null) {
-                view = convertView;
-            } else {
-                view = mInFlator.inflate(R.layout.item_log, null);
-            }
+        public View newView(Context context, Cursor cursor, ViewGroup viewGroup) {
+            return LayoutInflater.from(context).inflate(R.layout.item_log, viewGroup, false);
+        }
+
+        @Override
+        public void bindView(View view, Context context, Cursor cursor) {
             TextView tvCC = (TextView) view.findViewById(R.id.textview_cc);
             TextView tvTime = (TextView) view.findViewById(R.id.textview_timestamp);
             SeekBar sbCc = (SeekBar) view.findViewById(R.id.seekbar_current_cc);
             sbCc.setEnabled(false);
-            LogData data = getItem(position);
-            tvCC.setText(data.mCc + "cc");
-            Date date = new Date(data.mTimestamp);
+            int idxCc = cursor.getColumnIndex(LogDbHelper.WATER_CC);
+            int idxTime = cursor.getColumnIndex(LogDbHelper.TIMESTAMP);
+            int cc = cursor.getInt(idxCc);
+            long timestamp = cursor.getLong(idxTime);
+            tvCC.setText(cc + "cc");
+            Date date = new Date(timestamp);
             tvTime.setText(date.getHours() + ":" + date.getMinutes());
-            sbCc.setProgress(data.mCc);
-            return view;
+            sbCc.setProgress(cc);
         }
     }
-
-    public static class LogData {
-        final public long mTimestamp;
-        final public int mCc;
-
-        public LogData(int cc, long timestamp) {
-            mCc = cc;
-            mTimestamp = timestamp;
-        }
-
-        public LogData(ContentValues values) {
-            mCc = values.getAsInteger(LogDbHelper.WATER_CC);
-            mTimestamp = values.getAsLong(LogDbHelper.TIMESTAMP);
-        }
-    }
-
 }
