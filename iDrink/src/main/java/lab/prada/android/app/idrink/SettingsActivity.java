@@ -16,32 +16,16 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
-import android.support.v4.app.Fragment;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-/**
- * A {@link PreferenceActivity} that presents a set of application settings. On
- * handset devices, settings are presented as a single list. On tablets,
- * settings are split by category, with category headers shown to the left of
- * the list of settings.
- * <p>
- * See <a href="http://developer.android.com/design/patterns/settings.html">
- * Android Design: Settings</a> for design guidelines and the <a
- * href="http://developer.android.com/guide/topics/ui/settings.html">Settings
- * API Guide</a> for more information on developing a Settings UI.
- */
 public class SettingsActivity extends PreferenceActivity implements OnSharedPreferenceChangeListener {
-    /**
-     * Determines whether to always show the simplified settings UI, where
-     * settings are presented in a single list. When false, settings are shown
-     * as a master/detail two-pane view on tablets. When true, a single pane is
-     * shown on tablets.
-     */
+
     private static final boolean ALWAYS_SIMPLE_PREFS = false;
     private static final int REQUEST_CONNECT_DEVICE = 1;
     private static final int DEFAULT_DURATION = 60 * 60; // 60 mins = 3600 secs
+    private static final int DEFAULT_KG = 70;
 
     private BluetoothChatService mChatService;
     private AlarmManager mAlarmService;
@@ -81,6 +65,8 @@ public class SettingsActivity extends PreferenceActivity implements OnSharedPref
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getPreferenceManager().setSharedPreferencesName(MainActivity.PREF_NAME);
+
         mAlarmService = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 
         Intent intent = new Intent(this, AlarmBoardcastReceiver.class);
@@ -190,7 +176,7 @@ public class SettingsActivity extends PreferenceActivity implements OnSharedPref
             // cast its IBinder to a concrete class and directly access it.
             mChatService = ((BluetoothChatService.LocalBinder)service).getService();
 
-//            // Tell the user about this for our demo.
+            // Tell the user about this for our demo.
             Toast.makeText(SettingsActivity.this, R.string.local_service_connected,
                     Toast.LENGTH_SHORT).show();
         }
@@ -207,9 +193,9 @@ public class SettingsActivity extends PreferenceActivity implements OnSharedPref
     };
 
     @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if (key.equals("enable_notification")) {
-            if (sharedPreferences.getBoolean("enable_notification", false)) {
+    public void onSharedPreferenceChanged(SharedPreferences pref, String key) {
+        if (getString(R.string.key_notification).equals(key)) {
+            if (pref.getBoolean(key, false)) {
                 this.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -219,9 +205,23 @@ public class SettingsActivity extends PreferenceActivity implements OnSharedPref
             } else {
                 cancelAlarmTrigger();
             }
-        } else if (key.equals("super_duration")) {
+            return;
+        }
+        if (getString(R.string.key_duration).equals(key)) {
             cancelAlarmTrigger();
             setAlarmTrigger();
+            return;
         }
+        if (getString(R.string.key_weight).equals(key) || getString(R.string.key_mode).equals(key)) {
+            calculateTarget(pref);
+            return;
+        }
+    }
+
+    private void calculateTarget(SharedPreferences pref) {
+        // 1 kg x 30 cc(but athlete should be 40 cc) = daily requirement
+        int scale = pref.getBoolean(getString(R.string.key_mode), false) ? 40 : 30;
+        int weight = Integer.valueOf(pref.getString(getString(R.string.key_weight), String.valueOf(DEFAULT_KG)));
+        pref.edit().putInt(MainActivity.KEY_DAILY_TARGET, weight * scale).apply();
     }
 }

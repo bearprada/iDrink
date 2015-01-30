@@ -23,4 +23,9 @@
     <string name="title_activity_chart">ChartActivity</string>
     <string name="hello_world">Hello world!</string>
 
+    <string name="key_mode">athlete_mode</string>
+    <string name="key_weight">weight</string>
+    <string name="key_notification">enable_notification</string>
+    <string name="key_duration">super_duration</string>
+
 </resources>
