@@ -1,12 +1,11 @@
 package lab.prada.android.app.idrink;
 
-import java.util.Calendar;
-
-import lab.prada.android.app.idrink.LogProvider.LogDbHelper;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
@@ -14,19 +13,30 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup;
 import android.widget.SeekBar;
 
 import com.androidquery.AQuery;
 
-public class MainActivity extends ActionBarActivity {
+import java.util.Calendar;
+
+import lab.prada.android.app.idrink.LogProvider.LogDbHelper;
+
+public class MainActivity extends ActionBarActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+
+    protected static final int REFRESH_VIEW = 0;
+    private Handler mHandler;
+    private AQuery aq;
+    private ContentResolver mContentResolver;
+    private ContentObserver mContentObserver;
+    private SharedPreferences mPref;
+
+    public static final String KEY_DAILY_TARGET = "key_daily_target";
+    public static final String PREF_NAME = "idrink_pref_name";
 
     static final String ACT_ALARM_NOTIFICATION = "lab.prada.alarm.NOTIFY";
 
@@ -53,10 +63,38 @@ public class MainActivity extends ActionBarActivity {
             // TODO remove notification from manager
         }
 
-        if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new PlaceholderFragment()).commit();
-        }
+        mContentResolver = getContentResolver();
+        mPref = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+
+        aq = new AQuery(findViewById(R.id.root_view));
+        aq.find(R.id.btn_list).clicked(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, LogActivity.class);
+                startActivity(intent);
+            }
+        });
+        aq.find(R.id.seekbar_current_cc_hourly).enabled(false);
+        aq.find(R.id.seekbar_current_cc_daily).enabled(false);
+        refreshView();
+
+        mHandler = new Handler() {
+            @Override
+            public void handleMessage(Message message) {
+                switch (message.what) {
+                    case REFRESH_VIEW:
+                        refreshView();
+                        break;
+                }
+            }
+        };
+
+        mContentObserver = new ContentObserver(mHandler) {
+            @Override
+            public void onChange(boolean selfChange, Uri uri) {
+                mHandler.sendEmptyMessage(REFRESH_VIEW);
+            }
+        };
     }
 
     @Override
@@ -80,156 +118,104 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment implements OnClickListener {
-        protected static final int REFRESH_VIEW = 0;
-        private Handler mHandler;
-        private AQuery aq;
-        private ContentResolver mContentResolver;
-        private ContentObserver mContentObserver;
+    @Override
+    public void onResume() {
+        super.onResume();
+        mContentResolver.registerContentObserver(LogProvider.URI, true, mContentObserver);
+        mPref.registerOnSharedPreferenceChangeListener(this);
+        refreshView();
+    }
 
-        public PlaceholderFragment() {
+    @Override
+    public void onPause() {
+        super.onPause();
+        mContentResolver.unregisterContentObserver(mContentObserver);
+        mPref.unregisterOnSharedPreferenceChangeListener(this);
+    }
+
+    private void refreshView() {
+        if (aq == null) {
+            return;
         }
+        SeekBar dailySb = aq.find(R.id.seekbar_current_cc_daily).getSeekBar();
+        SeekBar hourlySb = aq.find(R.id.seekbar_current_cc_hourly).getSeekBar();
+        int dialyCc = getDailyCc();
+        int hourlyCc = getHourCc();
+        dailySb.setMax(getDialyTarget());
+        dailySb.setProgress(dialyCc);
+        hourlySb.setMax(getHourlyTarget());
+        hourlySb.setProgress(hourlyCc);
 
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            mContentResolver = getActivity().getContentResolver();
-        }
-
-        @Override
-        public void onResume() {
-            super.onResume();
-            mContentResolver.registerContentObserver(LogProvider.URI, true, mContentObserver);
-        }
-
-        @Override
-        public void onPause() {
-            super.onPause();
-            mContentResolver.unregisterContentObserver(mContentObserver);
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_main, container,
-                    false);
-            aq = new AQuery(rootView);
-            aq.find(R.id.btn_list).clicked(this);
-            aq.find(R.id.seekbar_current_cc_hourly).enabled(false);
-            aq.find(R.id.seekbar_current_cc_daily).enabled(false);
-            refreshView();
-
-            mHandler = new Handler() {
-                @Override
-                public void handleMessage(Message message) {
-                    switch (message.what) {
-                    case REFRESH_VIEW:
-                        refreshView();
-                        break;
-                    }
-                }
-            };
-
-            mContentObserver = new ContentObserver(mHandler) {
-                @Override
-                public void onChange(boolean selfChange, Uri uri) {
-                    mHandler.sendEmptyMessage(REFRESH_VIEW);
-                }
-            };
-            return rootView;
-        }
-
-        private void refreshView() {
-            if (aq == null) {
-                return;
-            }
-            SeekBar dailySb = aq.find(R.id.seekbar_current_cc_daily).getSeekBar();
-            SeekBar hourlySb = aq.find(R.id.seekbar_current_cc_hourly).getSeekBar();
-            int dialyCc = getDailyCc();
-            int hourlyCc = getHourCc();
-            dailySb.setMax(getDialyTarget());
-            dailySb.setProgress(dialyCc);
-            hourlySb.setMax(getHourlyTarget());
-            hourlySb.setProgress(hourlyCc);
-
-            aq.find(R.id.text_current_cc_daily)
+        aq.find(R.id.text_current_cc_daily)
                 .text(String.format("%d / %d cc", dialyCc, dailySb.getMax()));
-            aq.find(R.id.text_current_cc_hourly)
+        aq.find(R.id.text_current_cc_hourly)
                 .text(String.format("%d / %d cc", hourlyCc, hourlySb.getMax()));
-        }
+    }
 
-        private int getHourlyTarget() {
-            return getDialyTarget() / 24;
-        }
+    private int getHourlyTarget() {
+        return getDialyTarget() / 24;
+    }
 
-        private int getDialyTarget() {
-            return 3000; // FIXME
-        }
-        private int getHourCc() {
-            Calendar queryTime = Calendar.getInstance();
-            queryTime.set(Calendar.MINUTE, 0);
-            long t1 = queryTime.getTimeInMillis();
-            queryTime.set(Calendar.HOUR, queryTime.get(Calendar.HOUR) + 1);
-            long t2 = queryTime.getTimeInMillis();
-            return sumCc(t1, t2);
-        }
+    private int getDialyTarget() {
+        return mPref.getInt(KEY_DAILY_TARGET, 3000);
+    }
 
-        private int sumCc(long t1, long t2) {
-            Cursor c = mContentResolver.query(LogProvider.URI,
-                    null, LogDbHelper.TIMESTAMP + ">?" + " and " + LogDbHelper.TIMESTAMP + "<?", 
-                    new String[]{String.valueOf(t1), String.valueOf(t2)}, null);
-            int total = 0;
-            try {
-                for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
-                    ContentValues values = new ContentValues();
-                    DatabaseUtils.cursorRowToContentValues(c, values);
-                    if (values.containsKey(LogDbHelper.WATER_CC)) {
-                        Integer cc = values.getAsInteger(LogDbHelper.WATER_CC);
-                        if (cc != null) {
-                            total += values.getAsInteger(LogDbHelper.WATER_CC);
-                        }
+    private int getHourCc() {
+        Calendar queryTime = Calendar.getInstance();
+        queryTime.set(Calendar.MINUTE, 0);
+        long t1 = queryTime.getTimeInMillis();
+        queryTime.set(Calendar.HOUR, queryTime.get(Calendar.HOUR) + 1);
+        long t2 = queryTime.getTimeInMillis();
+        return sumCc(t1, t2);
+    }
+
+    private int sumCc(long t1, long t2) {
+        Cursor c = mContentResolver.query(LogProvider.URI,
+                null, LogDbHelper.TIMESTAMP + ">?" + " and " + LogDbHelper.TIMESTAMP + "<?",
+                new String[]{String.valueOf(t1), String.valueOf(t2)}, null);
+        int total = 0;
+        try {
+            for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
+                ContentValues values = new ContentValues();
+                DatabaseUtils.cursorRowToContentValues(c, values);
+                if (values.containsKey(LogDbHelper.WATER_CC)) {
+                    Integer cc = values.getAsInteger(LogDbHelper.WATER_CC);
+                    if (cc != null) {
+                        total += values.getAsInteger(LogDbHelper.WATER_CC);
                     }
                 }
-            } finally {
-                c.close();
             }
-            return total;
+        } finally {
+            c.close();
         }
+        return total;
+    }
 
-        private int getDailyCc() {
-            Calendar queryTime = Calendar.getInstance();
-            queryTime.set(Calendar.HOUR, 0);
-            queryTime.set(Calendar.MINUTE, 0);
-            long t1 = queryTime.getTimeInMillis();
-            queryTime.set(Calendar.DATE, queryTime.get(Calendar.DATE) + 1);
-            long t2 = queryTime.getTimeInMillis();
-            return sumCc(t1, t2);
-        }
+    private int getDailyCc() {
+        Calendar queryTime = Calendar.getInstance();
+        queryTime.set(Calendar.HOUR, 0);
+        queryTime.set(Calendar.MINUTE, 0);
+        long t1 = queryTime.getTimeInMillis();
+        queryTime.set(Calendar.DATE, queryTime.get(Calendar.DATE) + 1);
+        long t2 = queryTime.getTimeInMillis();
+        return sumCc(t1, t2);
+    }
 
-        @Override
-        public void onClick(View v) {
-            Intent intent;
-            switch(v.getId()) {
-            case R.id.btn_list:
-                intent = new Intent(getActivity(), LogActivity.class);
-                startActivity(intent);
-                break;
-            }
-        }
-
-        @Override
-        public void onActivityResult(int requestCode, int resultCode, Intent data) {
-            switch(requestCode) {
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch(requestCode) {
             case AR_SETTING:
                 if (resultCode == Activity.RESULT_OK) {
                     refreshView();
                 }
                 break;
-            }
         }
     }
 
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+        if (KEY_DAILY_TARGET.equals(s)) {
+            refreshView();
+        }
+    }
 }
