@@ -18,9 +18,9 @@ android {
 }
 
 dependencies {
+    compile 'com.github.blackfizz:eazegraph:1.2.0@aar'
+    compile 'com.nineoldandroids:library:2.4.0'
     compile 'com.android.support:appcompat-v7:19.+'
     compile 'com.googlecode.android-query:android-query:0.25.9'
-    compile 'info.hoang8f:fbutton:1.0.5'
     compile 'com.melnykov:floatingactionbutton:1.1.0'
-    compile 'com.jjoe64:graphview:3.1.3'
 }

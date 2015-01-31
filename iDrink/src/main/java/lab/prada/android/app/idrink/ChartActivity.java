@@ -1,53 +1,30 @@
 package lab.prada.android.app.idrink;
 
-import com.jjoe64.graphview.BarGraphView;
-import com.jjoe64.graphview.CustomLabelFormatter;
-import com.jjoe64.graphview.GraphView;
-import com.jjoe64.graphview.GraphViewSeries;
-import com.jjoe64.graphview.GraphViewStyle;
-
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
-import android.graphics.Color;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Toast;
+
+
+import org.eazegraph.lib.charts.ValueLineChart;
+import org.eazegraph.lib.models.ValueLinePoint;
+import org.eazegraph.lib.models.ValueLineSeries;
 
 import java.util.Calendar;
-import java.util.Vector;
+import java.util.Date;
 
 public class ChartActivity extends ActionBarActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        BarGraphView lineGraphView = new BarGraphView(this, "iDrink");
-        GraphViewStyle style = new GraphViewStyle(Color.BLACK, Color.BLACK, Color.BLACK);
-        style.setLegendWidth(30);
-        lineGraphView.setGraphViewStyle(style);
-        lineGraphView.setCustomLabelFormatter(new CustomLabelFormatter() {
-            @Override public String formatLabel(double value, boolean isValueX) {
-                if (isValueX == false)
-                    return String.format("%.0f", value);
-                return "";
-            }
-        });
+        setContentView(R.layout.activity_chart);
+        ValueLineChart chartView = (ValueLineChart) findViewById(R.id.chart_view);
+        setupChartView(chartView);
 
-        GraphViewSeries series = getDataSeries();
-        if (series == null) {
-            Toast.makeText(this, R.string.waring_no_data, Toast.LENGTH_LONG).show();
-            finish();
-            return;
-        }
-        lineGraphView.addSeries(series);
-        setContentView(lineGraphView);
     }
 
     @Override
@@ -70,7 +47,7 @@ public class ChartActivity extends ActionBarActivity {
     }
 
 
-    private GraphViewSeries getDataSeries() {
+    private void setupChartView(ValueLineChart view) {
         Calendar queryTime = Calendar.getInstance();
         queryTime.set(Calendar.HOUR, 0); //setting time to 0, as its set to current time by default.
         queryTime.set(Calendar.MINUTE, 0);
@@ -83,20 +60,19 @@ public class ChartActivity extends ActionBarActivity {
                 LogProvider.LogDbHelper.TIMESTAMP + ">?" + " and " + LogProvider.LogDbHelper.TIMESTAMP + "<?",
                 new String[]{String.valueOf(t1), String.valueOf(t2)},
                 LogProvider.LogDbHelper.TIMESTAMP + " ASC");
-
-        Vector<GraphView.GraphViewData> data = new Vector<GraphView.GraphViewData>(c.getCount());
+        ValueLineSeries series = new ValueLineSeries();
+        series.setColor(0xFF56B7F1);
         for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
             ContentValues values = new ContentValues();
             DatabaseUtils.cursorRowToContentValues(c, values);
             long x = values.getAsLong(LogProvider.LogDbHelper.TIMESTAMP);
             int y = values.getAsInteger(LogProvider.LogDbHelper.WATER_CC);
-            android.util.Log.e("PC", " x = " + x + ", y = " + y);
-            data.add(new GraphView.GraphViewData(x, y));
+            Date date = new Date(x);
+            String d = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+            series.addPoint(new ValueLinePoint(d, y));
         }
-        if (data.isEmpty()) {
-            return null;
-        } else {
-            return new GraphViewSeries(data.toArray(new GraphView.GraphViewData[]{}));
-        }
+        view.addSeries(series);
+        view.startAnimation();
+
     }
 }
