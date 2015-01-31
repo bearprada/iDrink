@@ -389,12 +389,10 @@ public class BluetoothChatService extends Service {
                 while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
                     if (tokenizer.ttype == StreamTokenizer.TT_NUMBER) {
                         double cc = tokenizer.nval;
-                        Log.w("PC", "cc : " + cc);
                         ContentValues values = new ContentValues();
                         values.put(LogDbHelper.WATER_CC, cc);
                         values.put(LogDbHelper.TIMESTAMP, System.currentTimeMillis());
-                        Uri result = mmResovler.insert(LogProvider.URI, values);
-                        Log.w("PC", "insert cc : " + cc + "\trecord : " + result.toString());
+                        mmResovler.insert(LogProvider.URI, values);
                     }
                 }
             } catch (IOException e) {

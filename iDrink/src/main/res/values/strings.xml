@@ -2,30 +2,32 @@
 <resources>
 
     <string name="app_name">iDrink</string>
-    <string name="action_settings">Settings</string>
-    <string name="action_chart">Chart</string>
-    <string name="action_bluetooth_pair">Pair</string>
-    <string name="title_activity_log">LogActivity</string>
+    <string name="action_settings">設定</string>
+    <string name="action_chart">圖表</string>
+    <string name="action_bluetooth_pair">藍芽配對</string>
+    <string name="action_debug">輸入測試資料</string>
 
-    <!-- DeviceListActivity -->
-    <string name="scanning">scanning for devices...</string>
-    <string name="select_device">select a device to connect</string>
+    <string name="scanning">掃描中</string>
+    <string name="select_device">選擇連線裝置</string>
     <string name="none_paired">No devices have been paired</string>
-    <string name="none_found">No devices found</string>
-    <string name="title_paired_devices">Paired Devices</string>
+    <string name="none_found">找不到藍芽裝置</string>
+    <string name="title_paired_devices">已配對的裝置</string>
     <string name="title_other_devices">Other Available Devices</string>
-    <string name="button_scan">Scan for devices</string>
+    <string name="button_scan">掃描藍芽裝置</string>
     <string name="local_service_connected">"連線完成"</string>
     <string name="local_service_disconnected">"移除連線"</string>
     <string name="warning_alarm_start">"啟用推播鬧鐘"</string>
     <string name="warning_alarm_stop">"停用推播鬧鐘"</string>
     <string name="notification_title">"提醒您水量攝取不足"</string>
     <string name="waring_no_data">"目前尚無任何飲水資料"</string>
-    <string name="title_activity_chart">ChartActivity</string>
+    <string name="title_activity_chart">圖表</string>
 
     <string name="key_mode">athlete_mode</string>
     <string name="key_weight">weight</string>
     <string name="key_notification">enable_notification</string>
     <string name="key_duration">super_duration</string>
+    <string name="confirm">確認</string>
+    <string name="cancel">取消</string>
+
 
 </resources>

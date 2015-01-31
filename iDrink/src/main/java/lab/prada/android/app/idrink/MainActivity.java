@@ -1,9 +1,11 @@
 package lab.prada.android.app.idrink;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.ContentObserver;
@@ -21,6 +23,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -134,16 +137,33 @@ public class MainActivity extends ActionBarActivity implements SharedPreferences
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            Intent intent = new Intent(this, SettingsActivity.class);
-            startActivityForResult(intent, AR_SETTING);
-            return true;
+        switch(item.getItemId()) {
+            case R.id.action_settings:
+                Intent intent = new Intent(this, SettingsActivity.class);
+                startActivityForResult(intent, AR_SETTING);
+                return true;
+            case R.id.action_debug:
+                // Set an EditText view to get user input
+                final EditText input = new EditText(this);
+                new AlertDialog.Builder(this)
+                    .setTitle(R.string.action_debug)
+                    .setView(input)
+                    .setPositiveButton(R.string.confirm, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            try {
+                                int data = Integer.valueOf(input.getText().toString());
+                                ContentValues values = new ContentValues();
+                                values.put(LogDbHelper.WATER_CC, data);
+                                values.put(LogDbHelper.TIMESTAMP, System.currentTimeMillis());
+                                getContentResolver().insert(LogProvider.URI, values);
+                            } catch (Throwable t) {}
+                        }
+                    }).setNegativeButton(R.string.cancel, null).show();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
-        return super.onOptionsItemSelected(item);
     }
 
     @Override
