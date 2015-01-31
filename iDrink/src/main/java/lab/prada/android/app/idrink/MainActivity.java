@@ -13,16 +13,22 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.widget.CursorAdapter;
 import android.support.v7.app.ActionBarActivity;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.widget.ListView;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
 import com.androidquery.AQuery;
 
 import java.util.Calendar;
+import java.util.Date;
 
 import lab.prada.android.app.idrink.LogProvider.LogDbHelper;
 
@@ -34,6 +40,9 @@ public class MainActivity extends ActionBarActivity implements SharedPreferences
     private ContentResolver mContentResolver;
     private ContentObserver mContentObserver;
     private SharedPreferences mPref;
+
+    private ListView mListView;
+    private LogAdapter mAdapter;
 
     public static final String KEY_DAILY_TARGET = "key_daily_target";
     public static final String PREF_NAME = "idrink_pref_name";
@@ -67,15 +76,15 @@ public class MainActivity extends ActionBarActivity implements SharedPreferences
         mPref = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
 
         aq = new AQuery(findViewById(R.id.root_view));
-        aq.find(R.id.btn_list).clicked(new OnClickListener() {
+        aq.find(R.id.seekbar_current_cc_hourly).enabled(false);
+        aq.find(R.id.seekbar_current_cc_daily).enabled(false);
+        aq.find(R.id.btn_chart).clicked(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, LogActivity.class);
+                Intent intent = new Intent(MainActivity.this, ChartActivity.class);
                 startActivity(intent);
             }
         });
-        aq.find(R.id.seekbar_current_cc_hourly).enabled(false);
-        aq.find(R.id.seekbar_current_cc_daily).enabled(false);
         refreshView();
 
         mHandler = new Handler() {
@@ -93,8 +102,27 @@ public class MainActivity extends ActionBarActivity implements SharedPreferences
             @Override
             public void onChange(boolean selfChange, Uri uri) {
                 mHandler.sendEmptyMessage(REFRESH_VIEW);
+                mAdapter.changeCursor(getQuery()); // we reset cursor here
             }
         };
+        mAdapter = new LogAdapter(this, getQuery());
+        mListView = (ListView) findViewById(R.id.list_view);
+        mListView.setAdapter(mAdapter);
+    }
+
+    private Cursor getQuery() {
+        Calendar queryTime = Calendar.getInstance();
+        queryTime.set(Calendar.HOUR, 0); //setting time to 0, as its set to current time by default.
+        queryTime.set(Calendar.MINUTE, 0);
+        long t1 = queryTime.getTimeInMillis();
+        queryTime.set(Calendar.DATE, queryTime.get(Calendar.DATE) + 1);
+        long t2 = queryTime.getTimeInMillis();
+
+        return getContentResolver().query(
+                LogProvider.URI,
+                null, LogDbHelper.TIMESTAMP + ">? and " + LogDbHelper.TIMESTAMP + "<?",
+                new String[] { String.valueOf(t1), String.valueOf(t2) },
+                null);
     }
 
     @Override
@@ -216,6 +244,34 @@ public class MainActivity extends ActionBarActivity implements SharedPreferences
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
         if (KEY_DAILY_TARGET.equals(s)) {
             refreshView();
+        }
+    }
+
+    public static class LogAdapter extends CursorAdapter {
+
+        public LogAdapter(Context context, Cursor cursor) {
+            super(context, cursor);
+        }
+
+        @Override
+        public View newView(Context context, Cursor cursor, ViewGroup viewGroup) {
+            return LayoutInflater.from(context).inflate(R.layout.item_log, viewGroup, false);
+        }
+
+        @Override
+        public void bindView(View view, Context context, Cursor cursor) {
+            TextView tvCC = (TextView) view.findViewById(R.id.textview_cc);
+            TextView tvTime = (TextView) view.findViewById(R.id.textview_timestamp);
+            SeekBar sbCc = (SeekBar) view.findViewById(R.id.seekbar_current_cc);
+            sbCc.setEnabled(false);
+            int idxCc = cursor.getColumnIndex(LogDbHelper.WATER_CC);
+            int idxTime = cursor.getColumnIndex(LogDbHelper.TIMESTAMP);
+            int cc = cursor.getInt(idxCc);
+            long timestamp = cursor.getLong(idxTime);
+            tvCC.setText(cc + "cc");
+            Date date = new Date(timestamp);
+            tvTime.setText(date.getHours() + ":" + date.getMinutes());
+            sbCc.setProgress(cc);
         }
     }
 }

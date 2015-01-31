@@ -31,14 +31,10 @@
             android:name="lab.prada.android.app.idrink.SettingsActivity"
             android:label="@string/title_activity_settings" />
         <activity
-            android:name="lab.prada.android.app.idrink.LogActivity"
-            android:label="@string/title_activity_log" />
-        <activity
             android:name="lab.prada.android.app.idrink.DeviceListActivity"
             android:configChanges="orientation|keyboardHidden"
             android:label="@string/select_device"
             android:theme="@android:style/Theme.Dialog" />
-
         <service android:name="lab.prada.android.app.idrink.service.BluetoothChatService" />
 
         <provider

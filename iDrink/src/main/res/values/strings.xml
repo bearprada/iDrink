@@ -20,8 +20,8 @@
     <string name="warning_alarm_start">"啟用推播鬧鐘"</string>
     <string name="warning_alarm_stop">"停用推播鬧鐘"</string>
     <string name="notification_title">"提醒您水量攝取不足"</string>
+    <string name="waring_no_data">"目前尚無任何飲水資料"</string>
     <string name="title_activity_chart">ChartActivity</string>
-    <string name="hello_world">Hello world!</string>
 
     <string name="key_mode">athlete_mode</string>
     <string name="key_weight">weight</string>

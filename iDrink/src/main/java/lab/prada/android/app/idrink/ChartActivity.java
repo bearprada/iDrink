@@ -18,6 +18,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import java.util.Calendar;
 import java.util.Vector;
@@ -27,12 +28,26 @@ public class ChartActivity extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_chart);
+        BarGraphView lineGraphView = new BarGraphView(this, "iDrink");
+        GraphViewStyle style = new GraphViewStyle(Color.BLACK, Color.BLACK, Color.BLACK);
+        style.setLegendWidth(30);
+        lineGraphView.setGraphViewStyle(style);
+        lineGraphView.setCustomLabelFormatter(new CustomLabelFormatter() {
+            @Override public String formatLabel(double value, boolean isValueX) {
+                if (isValueX == false)
+                    return String.format("%.0f", value);
+                return "";
+            }
+        });
 
-        if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new PlaceholderFragment()).commit();
+        GraphViewSeries series = getDataSeries();
+        if (series == null) {
+            Toast.makeText(this, R.string.waring_no_data, Toast.LENGTH_LONG).show();
+            finish();
+            return;
         }
+        lineGraphView.addSeries(series);
+        setContentView(lineGraphView);
     }
 
     @Override
@@ -54,61 +69,34 @@ public class ChartActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment {
 
-        public PlaceholderFragment() {
+    private GraphViewSeries getDataSeries() {
+        Calendar queryTime = Calendar.getInstance();
+        queryTime.set(Calendar.HOUR, 0); //setting time to 0, as its set to current time by default.
+        queryTime.set(Calendar.MINUTE, 0);
+        long t1 = queryTime.getTimeInMillis();
+        queryTime.set(Calendar.DATE, queryTime.get(Calendar.DATE) + 1);
+        long t2 = queryTime.getTimeInMillis();
+
+        Cursor c = getContentResolver().query(LogProvider.URI,
+                null,
+                LogProvider.LogDbHelper.TIMESTAMP + ">?" + " and " + LogProvider.LogDbHelper.TIMESTAMP + "<?",
+                new String[]{String.valueOf(t1), String.valueOf(t2)},
+                LogProvider.LogDbHelper.TIMESTAMP + " ASC");
+
+        Vector<GraphView.GraphViewData> data = new Vector<GraphView.GraphViewData>(c.getCount());
+        for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
+            ContentValues values = new ContentValues();
+            DatabaseUtils.cursorRowToContentValues(c, values);
+            long x = values.getAsLong(LogProvider.LogDbHelper.TIMESTAMP);
+            int y = values.getAsInteger(LogProvider.LogDbHelper.WATER_CC);
+            android.util.Log.e("PC", " x = " + x + ", y = " + y);
+            data.add(new GraphView.GraphViewData(x, y));
         }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                Bundle savedInstanceState) {
-//            View rootView = inflater.inflate(R.layout.fragment_chart,
-//                    container, false);
-            BarGraphView lineGraphView = new BarGraphView(getActivity(), "iDrink");
-            GraphViewStyle style = new GraphViewStyle(Color.BLACK, Color.BLACK, Color.BLACK);
-            style.setLegendWidth(30);
-            lineGraphView.setGraphViewStyle(style);
-            lineGraphView.setCustomLabelFormatter(new CustomLabelFormatter() {
-                @Override public String formatLabel(double value, boolean isValueX) {
-                    if (isValueX == false)
-                        return String.format("%.0f", value);
-                    return "";
-                }
-            });
-
-
-                lineGraphView.addSeries(getDataSeries());
-            return lineGraphView;
-        }
-
-        private GraphViewSeries getDataSeries() {
-            Calendar queryTime = Calendar.getInstance();
-            queryTime.set(Calendar.HOUR, 0); //setting time to 0, as its set to current time by default.
-            queryTime.set(Calendar.MINUTE, 0);
-            long t1 = queryTime.getTimeInMillis();
-            queryTime.set(Calendar.DATE, queryTime.get(Calendar.DATE) + 1);
-            long t2 = queryTime.getTimeInMillis();
-
-            Cursor c = getActivity().getContentResolver().query(LogProvider.URI,
-                    null,
-                    LogProvider.LogDbHelper.TIMESTAMP + ">?" + " and " + LogProvider.LogDbHelper.TIMESTAMP + "<?",
-                    new String[]{String.valueOf(t1), String.valueOf(t2)},
-                    LogProvider.LogDbHelper.TIMESTAMP + " ASC");
-
-            Vector<GraphView.GraphViewData> data = new Vector<GraphView.GraphViewData>(c.getCount());
-            for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
-                ContentValues values = new ContentValues();
-                DatabaseUtils.cursorRowToContentValues(c, values);
-                long x = values.getAsLong(LogProvider.LogDbHelper.TIMESTAMP);
-                int y = values.getAsInteger(LogProvider.LogDbHelper.WATER_CC);
-                android.util.Log.e("PC", " x = " + x + ", y = " + y);
-                data.add(new GraphView.GraphViewData(x, y));
-            }
-            return new GraphViewSeries(data.toArray(new GraphView.GraphViewData[] {}));
+        if (data.isEmpty()) {
+            return null;
+        } else {
+            return new GraphViewSeries(data.toArray(new GraphView.GraphViewData[]{}));
         }
     }
-
 }
