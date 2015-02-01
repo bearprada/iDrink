@@ -3,6 +3,7 @@ package lab.prada.android.app.idrink;
 import java.util.Calendar;
 
 import lab.prada.android.app.idrink.LogProvider.LogDbHelper;
+import lab.prada.android.app.idrink.utils.Consts;
 
 import android.annotation.TargetApi;
 import android.app.Notification;
@@ -54,7 +55,8 @@ public class AlarmBoardcastReceiver extends BroadcastReceiver {
     }
 
     private int getTargetCc(Context ctx) {
-        return 3000/24; // TODO replace to real implementation
+        return ctx.getSharedPreferences(MainActivity.PREF_NAME, Context.MODE_PRIVATE)
+                .getInt(MainActivity.KEY_DAILY_TARGET, Consts.DEFAULT_CC_PER_DAY) / 24;
     }
 
     private int getHourCc(Context ctx) {

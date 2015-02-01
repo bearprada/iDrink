@@ -34,6 +34,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 import lab.prada.android.app.idrink.LogProvider.LogDbHelper;
+import lab.prada.android.app.idrink.utils.Consts;
 
 public class MainActivity extends ActionBarActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -205,7 +206,7 @@ public class MainActivity extends ActionBarActivity implements SharedPreferences
     }
 
     private int getDialyTarget() {
-        return mPref.getInt(KEY_DAILY_TARGET, 3000);
+        return mPref.getInt(KEY_DAILY_TARGET, Consts.DEFAULT_CC_PER_DAY);
     }
 
     private int getHourCc() {

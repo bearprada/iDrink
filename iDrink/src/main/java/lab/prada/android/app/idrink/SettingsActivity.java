@@ -1,6 +1,8 @@
 package lab.prada.android.app.idrink;
 
 import lab.prada.android.app.idrink.service.BluetoothChatService;
+import lab.prada.android.app.idrink.utils.Consts;
+
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -24,8 +26,6 @@ public class SettingsActivity extends PreferenceActivity implements OnSharedPref
 
     private static final boolean ALWAYS_SIMPLE_PREFS = false;
     private static final int REQUEST_CONNECT_DEVICE = 1;
-    private static final int DEFAULT_DURATION = 60 * 60; // 60 mins = 3,600 secs
-    private static final int DEFAULT_KG = 70;
 
     private BluetoothChatService mChatService;
     private AlarmManager mAlarmService;
@@ -100,7 +100,7 @@ public class SettingsActivity extends PreferenceActivity implements OnSharedPref
 
     void setAlarmTrigger() {
         int duration = Integer.valueOf(getPreferenceManager().getSharedPreferences()
-                .getString(getString(R.string.key_duration), String.valueOf(DEFAULT_DURATION)));
+                .getString(getString(R.string.key_duration), String.valueOf(Consts.DEFAULT_DURATION)));
         mAlarmService.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(),
                 duration * 1000, mPendingIntent);
         Toast.makeText(this, R.string.warning_alarm_start, Toast.LENGTH_LONG).show();
@@ -221,7 +221,7 @@ public class SettingsActivity extends PreferenceActivity implements OnSharedPref
     private void calculateTarget(SharedPreferences pref) {
         // 1 kg x 30 cc(but athlete should be 40 cc) = daily requirement
         int scale = pref.getBoolean(getString(R.string.key_mode), false) ? 40 : 30;
-        int weight = Integer.valueOf(pref.getString(getString(R.string.key_weight), String.valueOf(DEFAULT_KG)));
+        int weight = Integer.valueOf(pref.getString(getString(R.string.key_weight), String.valueOf(Consts.DEFAULT_KG)));
         pref.edit().putInt(MainActivity.KEY_DAILY_TARGET, weight * scale).apply();
     }
 }
