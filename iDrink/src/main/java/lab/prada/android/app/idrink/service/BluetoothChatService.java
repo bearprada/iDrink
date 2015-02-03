@@ -43,6 +43,10 @@ import java.util.UUID;
 import lab.prada.android.app.idrink.LogProvider;
 import lab.prada.android.app.idrink.LogProvider.LogDbHelper;
 import lab.prada.android.app.idrink.MainActivity;
+import lab.prada.android.app.idrink.R;
+import lab.prada.android.app.idrink.utils.Consts;
+import lab.prada.android.app.idrink.utils.DBUtils;
+import lab.prada.android.app.idrink.utils.NotificationSender;
 
 /**
  * This class does all the work for setting up and managing Bluetooth
@@ -389,10 +393,22 @@ public class BluetoothChatService extends Service {
                 while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
                     if (tokenizer.ttype == StreamTokenizer.TT_NUMBER) {
                         double cc = tokenizer.nval;
+                        if (cc >= Consts.LIMIT_CC_PER_DRINK) {
+                            String msg = String.format(getString(R.string.warning_limit_per_drink), Consts.LIMIT_CC_PER_DRINK);
+                            NotificationSender.send(BluetoothChatService.this, R.string.notification_title_over_drink,
+                                    msg, NotificationSender.NOTI_200_CC);
+                        }
                         ContentValues values = new ContentValues();
                         values.put(LogDbHelper.WATER_CC, cc);
                         values.put(LogDbHelper.TIMESTAMP, System.currentTimeMillis());
                         mmResovler.insert(LogProvider.URI, values);
+
+                        int hourCc = DBUtils.getHourCc(BluetoothChatService.this);
+                        if (hourCc >= Consts.LIMIT_CC_PER_HOUR) {
+                            String msg = String.format(getString(R.string.warning_limit_per_hour), hourCc);
+                            NotificationSender.send(BluetoothChatService.this, R.string.notification_title_over_drink,
+                                    msg, NotificationSender.NOTI_OVER_HR);
+                        }
                     }
                 }
             } catch (IOException e) {

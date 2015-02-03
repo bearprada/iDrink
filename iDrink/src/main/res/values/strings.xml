@@ -19,6 +19,7 @@
     <string name="warning_alarm_start">"啟用推播鬧鐘"</string>
     <string name="warning_alarm_stop">"停用推播鬧鐘"</string>
     <string name="notification_title">"提醒您水量攝取不足"</string>
+    <string name="notification_title_over_drink">"提醒您水量攝取過多"</string>
     <string name="waring_no_data">"目前尚無任何飲水資料"</string>
     <string name="title_activity_chart">圖表</string>
 
@@ -30,4 +31,7 @@
     <string name="cancel">取消</string>
 
 
+    <string name="warning_drink_not_enought">目前您這小時攝取水量%1$dCC，距離目標還有%2$dCC</string>
+    <string name="warning_limit_per_drink">請注意，您一次喝水超過%dCC</string>
+    <string name="warning_limit_per_hour">請注意，您這小時已經喝水超過%dCC</string>
 </resources>

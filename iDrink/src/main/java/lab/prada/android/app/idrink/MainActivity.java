@@ -35,6 +35,8 @@ import java.util.Date;
 
 import lab.prada.android.app.idrink.LogProvider.LogDbHelper;
 import lab.prada.android.app.idrink.utils.Consts;
+import lab.prada.android.app.idrink.utils.DBUtils;
+import lab.prada.android.app.idrink.utils.NotificationSender;
 
 public class MainActivity extends ActionBarActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -51,7 +53,7 @@ public class MainActivity extends ActionBarActivity implements SharedPreferences
     public static final String KEY_DAILY_TARGET = "key_daily_target";
     public static final String PREF_NAME = "idrink_pref_name";
 
-    static final String ACT_ALARM_NOTIFICATION = "lab.prada.alarm.NOTIFY";
+    public static final String ACT_ALARM_NOTIFICATION = "lab.prada.alarm.NOTIFY";
 
     private static final int AR_SETTING             = 1;
     public static final int AR_ALARM_TRIGGER        = 2;
@@ -154,11 +156,25 @@ public class MainActivity extends ActionBarActivity implements SharedPreferences
                         public void onClick(DialogInterface dialogInterface, int i) {
                             try {
                                 int data = Integer.valueOf(input.getText().toString());
+                                // this is for debug notification
+                                if (data >= Consts.LIMIT_CC_PER_DRINK) {
+                                    String msg = String.format(getString(R.string.warning_limit_per_drink), Consts.LIMIT_CC_PER_DRINK);
+                                    NotificationSender.send(MainActivity.this, R.string.notification_title_over_drink, msg, NotificationSender.NOTI_200_CC);
+                                }
+
                                 ContentValues values = new ContentValues();
                                 values.put(LogDbHelper.WATER_CC, data);
                                 values.put(LogDbHelper.TIMESTAMP, System.currentTimeMillis());
                                 getContentResolver().insert(LogProvider.URI, values);
-                            } catch (Throwable t) {}
+
+                                // this is for debug notification
+                                int hourCc = DBUtils.getHourCc(MainActivity.this);
+                                if (hourCc >= Consts.LIMIT_CC_PER_HOUR) {
+                                    String msg = String.format(getString(R.string.warning_limit_per_hour), hourCc);
+                                    NotificationSender.send(MainActivity.this, R.string.notification_title_over_drink, msg, NotificationSender.NOTI_OVER_HR);
+                                }
+                            } catch (Throwable t) {
+                            }
                         }
                     }).setNegativeButton(R.string.cancel, null).show();
                 return true;
@@ -188,8 +204,8 @@ public class MainActivity extends ActionBarActivity implements SharedPreferences
         }
         SeekBar dailySb = aq.find(R.id.seekbar_current_cc_daily).getSeekBar();
         SeekBar hourlySb = aq.find(R.id.seekbar_current_cc_hourly).getSeekBar();
-        int dialyCc = getDailyCc();
-        int hourlyCc = getHourCc();
+        int dialyCc = DBUtils.getDailyCc(this);
+        int hourlyCc = DBUtils.getHourCc(this);
         dailySb.setMax(getDialyTarget());
         dailySb.setProgress(dialyCc);
         hourlySb.setMax(getHourlyTarget());
@@ -209,46 +225,6 @@ public class MainActivity extends ActionBarActivity implements SharedPreferences
         return mPref.getInt(KEY_DAILY_TARGET, Consts.DEFAULT_CC_PER_DAY);
     }
 
-    private int getHourCc() {
-        Calendar queryTime = Calendar.getInstance();
-        queryTime.set(Calendar.MINUTE, 0);
-        long t1 = queryTime.getTimeInMillis();
-        queryTime.set(Calendar.HOUR_OF_DAY, queryTime.get(Calendar.HOUR_OF_DAY) + 1);
-        long t2 = queryTime.getTimeInMillis();
-        return sumCc(t1, t2);
-    }
-
-    private int sumCc(long t1, long t2) {
-        Cursor c = mContentResolver.query(LogProvider.URI,
-                null, LogDbHelper.TIMESTAMP + ">?" + " and " + LogDbHelper.TIMESTAMP + "<?",
-                new String[]{String.valueOf(t1), String.valueOf(t2)}, null);
-        int total = 0;
-        try {
-            for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
-                ContentValues values = new ContentValues();
-                DatabaseUtils.cursorRowToContentValues(c, values);
-                if (values.containsKey(LogDbHelper.WATER_CC)) {
-                    Integer cc = values.getAsInteger(LogDbHelper.WATER_CC);
-                    if (cc != null) {
-                        total += values.getAsInteger(LogDbHelper.WATER_CC);
-                    }
-                }
-            }
-        } finally {
-            c.close();
-        }
-        return total;
-    }
-
-    private int getDailyCc() {
-        Calendar t = Calendar.getInstance();
-        t.set(Calendar.HOUR_OF_DAY, 0);
-        t.set(Calendar.MINUTE, 0);
-        long t1 = t.getTimeInMillis();
-        t.set(Calendar.DATE, t.get(Calendar.DATE) + 1);
-        long t2 = t.getTimeInMillis();
-        return sumCc(t1, t2);
-    }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
