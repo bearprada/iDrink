@@ -213,7 +213,7 @@ public class MainActivity extends ActionBarActivity implements SharedPreferences
         Calendar queryTime = Calendar.getInstance();
         queryTime.set(Calendar.MINUTE, 0);
         long t1 = queryTime.getTimeInMillis();
-        queryTime.set(Calendar.HOUR, queryTime.get(Calendar.HOUR) + 1);
+        queryTime.set(Calendar.HOUR_OF_DAY, queryTime.get(Calendar.HOUR_OF_DAY) + 1);
         long t2 = queryTime.getTimeInMillis();
         return sumCc(t1, t2);
     }
@@ -241,12 +241,12 @@ public class MainActivity extends ActionBarActivity implements SharedPreferences
     }
 
     private int getDailyCc() {
-        Calendar queryTime = Calendar.getInstance();
-        queryTime.set(Calendar.HOUR, 0);
-        queryTime.set(Calendar.MINUTE, 0);
-        long t1 = queryTime.getTimeInMillis();
-        queryTime.set(Calendar.DATE, queryTime.get(Calendar.DATE) + 1);
-        long t2 = queryTime.getTimeInMillis();
+        Calendar t = Calendar.getInstance();
+        t.set(Calendar.HOUR_OF_DAY, 0);
+        t.set(Calendar.MINUTE, 0);
+        long t1 = t.getTimeInMillis();
+        t.set(Calendar.DATE, t.get(Calendar.DATE) + 1);
+        long t2 = t.getTimeInMillis();
         return sumCc(t1, t2);
     }
 
